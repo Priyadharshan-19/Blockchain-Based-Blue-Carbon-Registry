@@ -1,0 +1,99 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Verifier Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 24px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 12px; }
+    th, td { border: 1px solid #ddd; padding: 8px; font-size: 14px; }
+    th { background: #f5f5f5; text-align: left; }
+    code { background: #f2f2f2; padding: 2px 4px; border-radius: 4px; }
+    .ok { color: #0a8f2f; font-weight: 600; }
+    .bad { color: #b00020; font-weight: 600; }
+    .btn { padding: 6px 10px; border: 1px solid #ddd; background:#fff; border-radius: 6px; cursor:pointer;}
+  </style>
+</head>
+<body>
+  <h2>Read‑Only Verifier Dashboard</h2>
+  <div>
+    <div>Contract: <code id="contract">{{ contract }}</code></div>
+    <div>Chain ID: <code id="chainid">{{ chain_id }}</code></div>
+    <div>RPC: <code>{{ rpc_url }}</code></div>
+  </div>
+
+  <h3>Batches</h3>
+  <table id="batchTable">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Committed At</th>
+        <th>Count</th>
+        <th>Batch Hash</th>
+        <th>Tx Hash</th>
+        <th>Actions</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+<script>
+async function fetchJSON(url){
+  const res = await fetch(url);
+  if(!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+function short(s) {
+  if (!s) return "";
+  return s.startsWith("0x") ? s.slice(0,10)+"…"+s.slice(-8) : s.slice(0,10)+"…";
+}
+
+async function loadBatches(){
+  const rows = await fetchJSON("/verifier/api/batches");
+  const tbody = document.querySelector("#batchTable tbody");
+  tbody.innerHTML = "";
+  for (const r of rows){
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${r.id}</td>
+      <td>${r.committed_at}</td>
+      <td>${r.count}</td>
+      <td><code title="${r.batch_hash}">${short(r.batch_hash)}</code></td>
+      <td><code title="${r.tx_hash}">${short(r.tx_hash||"")}</code></td>
+      <td>
+        <button class="btn" onclick="recompute(${r.id}, this)">Recompute</button>
+        <a class="btn" href="/verifier/api/readings?batch_id=${r.id}">JSON</a>
+        <a class="btn" href="/verifier/api/readings?batch_id=${r.id}&format=csv">CSV</a>
+        <a class="btn" href="/verifier/api/proof?batch_id=${r.id}" target="_blank">Proof</a>
+      </td>
+      <td id="st-${r.id}">—</td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+async function recompute(id, btn){
+  btn.disabled = true;
+  const st = document.getElementById("st-"+id);
+  st.textContent = "checking…";
+  try {
+    const r = await fetchJSON("/verifier/api/hash?batch_id="+id);
+    if (r.match) {
+      st.innerHTML = '<span class="ok">MATCH</span>';
+    } else {
+      st.innerHTML = '<span class="bad">MISMATCH</span>';
+    }
+  } catch(e){
+    st.innerHTML = '<span class="bad">ERROR</span>';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+loadBatches();
+</script>
+</body>
+</html>
