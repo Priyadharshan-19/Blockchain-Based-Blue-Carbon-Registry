@@ -1,5 +1,3 @@
-Here is your **full README**, clean, professional, and with the exact top section you requested:
-
 ---
 
 # 🌱 IoT + Blockchain Environmental Monitoring System
