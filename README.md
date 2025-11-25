@@ -112,6 +112,3 @@ Read-Only Verifier Dashboard (Node.js + Web3.js)
 *Engineering intelligent solutions for real-world environmental impact.*
 
 📩 **Email:** [priyadharshan802@gmail.com](mailto:priyadharshan802@gmail.com)
-🔗 **GitHub:** [https://github.com/Priyadharshan-19](https://github.com/Priyadharshan-19)
-🔗 **LinkedIn:** *Add your LinkedIn link*
-
